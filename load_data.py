@@ -198,8 +198,41 @@ def ImportLanguage(PersonLanguage):
         if connection:
             connection.close()
 
-def ImportForumData():
-    pass
+def ImportForumData(Forum):
+
+    Forum['creationDate'] = pd.to_datetime(Forum['creationDate'], errors='coerce')
+
+    query = """INSERT INTO Forum (
+            ForumID, 
+            Title,
+            CreateDate,
+            Moderator) 
+            VALUES (%s, %s, %s, %s)"""
+    try:
+        connection = psycopg2.connect(**database_params)
+
+   
+        with connection.cursor() as cursor:
+    
+            for index, row in Forum.iterrows():
+                ForumID_value = row['id']
+                Title_value = row['title']
+                CreationDate_value = row['creationDate']
+                Moderator_value = row['moderator']
+        
+        
+            cursor.execute(query, (ForumID_value,
+                               Title_value,
+                              CreationDate_value,
+                              Moderator_value))
+            connection.commit()
+            print("Data insertion successful!")
+    
+    except psycopg2.Error as e:
+        print(f"Error: {e}")
+    finally:
+        if connection:
+            connection.close()
 
 def ImportOrganisationData():
     pass
