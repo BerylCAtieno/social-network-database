@@ -39,7 +39,7 @@ database_params = {
     "port": "5432"
 }
 
-def import_place_data(Place):
+def ImportPlaceData(Place):
     continent_subset = Place[Place['type'] == 'continent']
     country_subset = Place[Place['type'] == 'country']
     city_subset = Place[Place['type'] == 'city']
@@ -92,7 +92,7 @@ def import_place_data(Place):
             connection.close()
 
 
-def import_person_data(Person):
+def ImportPersonData(Person):
     
     Person['creationDate'] = pd.to_datetime(Person['creationDate'], errors='coerce')
     Person['birthday'] = pd.to_datetime(Person['birthday'], errors='coerce')
@@ -145,7 +145,7 @@ def import_person_data(Person):
         if connection:
             connection.close()
 
-def import_person_email(PersonEmail):
+def ImportPersonEmail(PersonEmail):
     
     query = """INSERT INTO PersonEmail (
     PersonID, 
@@ -170,7 +170,7 @@ def import_person_email(PersonEmail):
         if connection:
             connection.close()
 
-def import_language(PersonLanguage):
+def ImportLanguage(PersonLanguage):
 
     query = """
             INSERT INTO PersonLanguage (
@@ -197,3 +197,9 @@ def import_language(PersonLanguage):
     finally:
         if connection:
             connection.close()
+
+def ImportForumData():
+    pass
+
+def ImportOrganisationData():
+    pass
