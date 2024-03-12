@@ -235,7 +235,73 @@ def ImportForumData(Forum):
             connection.close()
 
 def ImportMessageData(Post):
-    pass
+
+    Post['creationDate'] = pd.to_datetime(Post['creationDate'], errors='coerce')
+
+    message_query = """INSERT INTO Message (
+                        MessageID,
+                        content,
+                        length,
+                        Creator,
+                        CreationDate,
+                        LocationIP,
+                        BrowserUsed,
+                        Language,
+                        countryID) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+
+    post_query = """INSERT INTO Post (
+                        PostID,
+                        ImageFile,
+                        ForumID) 
+                    VALUES (%s, %s, %s)"""
+    
+    try:
+        connection = psycopg2.connect(**database_params)
+
+        with connection.cursor() as cursor:
+            
+            for index, row in Post.iterrows():
+
+                MessageID_value = row['id']
+                Content_value = row['content']
+                Length_value = row['length']
+                Creator_value = row['creator']
+                CreationDate_value = row['creationDate']
+                LocationIP_value = row['locationIP']
+                BrowserUsed_value = row['browserUsed']
+                Language_value = row['language']
+                CountryID_value = row['place']
+
+                cursor.execute(message_query, (MessageID_value, 
+                                               Content_value, 
+                                               Length_value, 
+                                               Creator_value,
+                                               CreationDate_value,
+                                               LocationIP_value,
+                                               BrowserUsed_value,
+                                               Language_value,
+                                               CountryID_value))
+                connection.commit()
+                print("Data insertion successful!")
+            
+            for index, row in Post.iterrows():
+
+                PostID_value = row['id']
+                ImageFile_value = row['imageFile']
+                ForumID_value = row['Forum.id']
+
+                cursor.execute(post_query, (PostID_value, 
+                                            ImageFile_value, 
+                                            ForumID_value))
+                connection.commit()
+                print("Data insertion successful!")
+    
+    except psycopg2.Error as e:
+        print(f"Error: {e}")
+    finally:
+        if connection:
+            connection.close()
 
 
 def ImportOrganisationData():
