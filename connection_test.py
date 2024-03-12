@@ -1,16 +1,17 @@
 import psycopg2
 from psycopg2 import OperationalError
 
+database_params = {
+    "dbname": "social_2",
+    "user": "postgres",
+    "password": "password",
+    "host": "localhost",
+    "port": "5432"
+}
+
 def test_connection():
     try:
-        # Replace these values with your PostgreSQL connection details
-        connection = psycopg2.connect(
-            dbname="social_2",
-            user="postgres",
-            password="password",
-            host="localhost",
-            port="5432"
-        )
+        connection = psycopg2.connect(**database_params)
         cursor = connection.cursor()
         print("Connection to PostgreSQL successful!")
         cursor.close()
