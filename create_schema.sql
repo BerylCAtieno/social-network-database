@@ -1,173 +1,226 @@
--- Create Person table
-CREATE TABLE Person (
-    PersonID SERIAL PRIMARY KEY,
-    CreationDate TIMESTAMP NOT NULL,
-    FirstName VARCHAR(255),
-    LastName VARCHAR(255),
-    Gender VARCHAR(50),
-    Birthday DATE CHECK (Birthday <= CURRENT_DATE),
-    BrowserUsed VARCHAR(255),
-    LocationIP VARCHAR(255)
-);
+DROP SCHEMA if exists social_network_db CASCADE;
+CREATE SCHEMA social_network_db;
+SET search_path TO social_network_db;
 
--- Create Email table
-CREATE TABLE PersonEmail (
-    EmailID SERIAL PRIMARY KEY,
-    PersonID INT NOT NULL,
-    Email VARCHAR(255) NOT NULL CHECK (Email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE ON UPDATE CASCADE
-);
+-- Create Place, continent, country, city tables
 
--- Create Language table
-CREATE TABLE PersonLanguage (
-    LanguageID SERIAL PRIMARY KEY,
-    PersonID INT NOT NULL,
-    Language VARCHAR(255) NOT NULL,
-    FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- Create University table
-CREATE TABLE University (
-    UniversityID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL
-);
-
--- Create Company table
-CREATE TABLE Company (
-    CompanyID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL
-);
-
--- Create Person_StudyAt_University table
-CREATE TABLE PersonStudyAtUniversity (
-    PersonID INT NOT NULL,
-    UniversityID INT NOT NULL,
-    ClassYear INT,
-    PRIMARY KEY (PersonID, UniversityID),
-    FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE,
-    FOREIGN KEY (UniversityID) REFERENCES University(UniversityID) ON DELETE CASCADE
-);
-
--- Create Person_WorkAt_Company table
-CREATE TABLE PersonWorkAtCompany (
-    PersonID INT NOT NULL,
-    CompanyID INT NOT NULL,
-    WorkFrom INT,
-    PRIMARY KEY (PersonID, CompanyID),
-    FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE,
-    FOREIGN KEY (CompanyID) REFERENCES Company(CompanyID) ON DELETE CASCADE
-);
-
-----cont.
-
--- Create Forum table
-CREATE TABLE Forum (
-    ForumID SERIAL PRIMARY KEY,
-    Title VARCHAR(255) NOT NULL,
-    CreateDate TIMESTAMP NOT NULL
+CREATE TABLE place(
+	placeID SERIAL PRIMARY KEY,
+	name VARCHAR (255),
+	url VARCHAR (2048)
 );
 
 
--- Create Post table (inherits Message)
-CREATE TABLE Post (
-    PostID SERIAL PRIMARY KEY,
-    MessageID INT NOT NULL,
-    Language VARCHAR(255),
-    ImageFile VARCHAR(255),
-    FOREIGN KEY (MessageID) REFERENCES Message(MessageID) ON DELETE CASCADE
+CREATE TABLE continent(
+	continentID INT,
+	primary key (continentID),
+    FOREIGN KEY (continentID) REFERENCES place(placeID) ON UPDATE NO ACTION ON DELETE CASCADE	
 );
 
--- Create Message table
-CREATE TABLE Message (
-    MessageID SERIAL PRIMARY KEY,
-    CreationDate TIMESTAMP NOT NULL,
-    BrowserUsed VARCHAR(255),
-    LocationIP VARCHAR(255),
-    Content TEXT,
-    Length INT,
-    PersonID INT NOT NULL,
-    FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE
-);
+CREATE TABLE country( 
+	countryID int PRIMARY KEY,
+	isPartOf int NOT NULL,
+	FOREIGN KEY (countryID) REFERENCES place(placeID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (isPartOf) REFERENCES continent(continentID) ON UPDATE CASCADE ON DELETE CASCADE
+) ;
 
--- Create Comment table (inherits Message)
-CREATE TABLE Comment (
-    CommentID SERIAL PRIMARY KEY,
-    MessageID INT NOT NULL,
-    FOREIGN KEY (MessageID) REFERENCES Message(MessageID) ON DELETE CASCADE
+CREATE TABLE city(
+	cityID int PRIMARY KEY,
+	isPartOf int not null,
+	FOREIGN KEY (cityID)REFERENCES place(placeID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (isPartOf) REFERENCES country(countryID) ON UPDATE CASCADE ON DELETE CASCADE	
 );
 
 
--- Create Tag table
-CREATE TABLE Tag (
-    TagID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL
+-- Create Person Table
+
+CREATE TABLE person (
+	personID BIGINT PRIMARY KEY,
+	firstName VARCHAR(25) NOT NULL,
+	lastName VARCHAR(25)  NOT NULL,
+	gender VARCHAR(25),
+	birthday DATE ,
+	creationDate TIMESTAMP check ( NOW()::timestamp > creationDate),
+	locationIP  VARCHAR(255),
+	browserUsed VARCHAR(255),
+	cityID INT,
+	FOREIGN KEY (cityID) REFERENCES city(cityID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Create TagClass table
-CREATE TABLE TagClass (
-    TagClassID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL
+-- pERSON eMAILS
+
+CREATE TABLE personemail(
+	 personID bigint,
+	 email VARCHAR(255) UNIQUE NOT NULL CHECK ( email ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$' ),
+	 PRIMARY KEY (personID, email),
+	 FOREIGN KEY (personID) REFERENCES PERSON(PERSONID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Post_HasTag_Tag (Many-to-Many)
-CREATE TABLE PostHasTag (
-    PostID INT NOT NULL,
-    TagID INT NOT NULL,
-    PRIMARY KEY (PostID, TagID),
-    FOREIGN KEY (PostID) REFERENCES Post(PostID) ON DELETE CASCADE,
-    FOREIGN KEY (TagID) REFERENCES Tag(TagID) ON DELETE CASCADE
+-- Person Language
+CREATE TABLE language (
+	 languageID BIGINT,
+	 language VARCHAR(255) NOT NULL,
+	 PRIMARY KEY (languageID, language),
+	 FOREIGN KEY (languageID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Tag_HasType_TagClass (Many-to-Many)
-CREATE TABLE TagHasType (
-    TagID INT NOT NULL,
-    TagClassID INT NOT NULL,
-    PRIMARY KEY (TagID, TagClassID),
-    FOREIGN KEY (TagID) REFERENCES Tag(TagID) ON DELETE CASCADE,
-    FOREIGN KEY (TagClassID) REFERENCES TagClass(TagClassID) ON DELETE CASCADE
+-- Forum
+CREATE TABLE forum(
+	forumID BIGSERIAL PRIMARY KEY,
+	title VARCHAR(55),
+	creationDate TIMESTAMP ,
+	moderatorID BIGINT ,
+	FOREIGN KEY (moderatorID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Create Place, City, Country, and Continent tables, assuming City and Country inherit from Place
-CREATE TABLE Place (
-    PlaceID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL
+CREATE TABLE "message"(
+	messageID BIGINT PRIMARY KEY,
+	"content" VARCHAR(255),
+	"length" INT, 
+	creator BIGINT ,
+	countryID BIGINT,
+	creationDate TIMESTAMP,
+	browserused  VARCHAR(55),
+	locationIP   VARCHAR(55),
+	FOREIGN KEY (creator) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (countryID) REFERENCES country(countryID) ON UPDATE CASCADE ON DELETE CASCADE	
 );
 
-CREATE TABLE City (
-    CityID INT NOT NULL,
-    PlaceID SERIAL PRIMARY KEY,
-    FOREIGN KEY (PlaceID) REFERENCES Place(PlaceID) ON DELETE CASCADE
+-- Post table
+CREATE TABLE post(
+	postID BIGSERIAL PRIMARY KEY,
+	imageFile varchar(255),
+	forumID BIGINT ,
+	FOREIGN KEY (postID) REFERENCES "message"(messageID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (forumID) REFERENCES forum(forumID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE Country (
-    CountryID INT NOT NULL,
-    PlaceID SERIAL PRIMARY KEY,
-    FOREIGN KEY (PlaceID) REFERENCES Place(PlaceID) ON DELETE CASCADE
+-- comment table
+
+CREATE TABLE "comment"(
+	commentID BIGSERIAL PRIMARY KEY,
+	replyOfPost BIGINT ,
+	replyOfComment BigINT,
+	FOREIGN KEY (replyOfPost) REFERENCES post(postID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (replyOfComment) REFERENCES COMMENT(commentID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE Continent (
-    ContinentID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL
+--tag and tag class tables
+
+Create TABLE tag(
+	tagID SERIAL PRIMARY KEY, 
+	name VARCHAR(255) NOT NULL, 
+	url VARCHAR (2048) 
 );
 
--- Person_KNOWS_Person (Many-to-Many)
-CREATE TABLE PersonKnowsPerson (
-    PersonID_A INT NOT NULL,
-    PersonID_B INT NOT NULL,
-    PRIMARY KEY (PersonID_A, PersonID_B),
-    FOREIGN KEY (PersonID_A) REFERENCES Person(PersonID) ON DELETE CASCADE,
-    FOREIGN KEY (PersonID_B) REFERENCES Person(PersonID) ON DELETE CASCADE
+CREATE TABLE tagClass(
+	tagClassID int PRIMARY KEY ,
+	tClassName varchar(255) not null, 
+	url varchar(2048)  
 );
 
--- Person_HasMember_Forum (Many-to-Many)
-CREATE TABLE ForumHasMember (
-    ForumID INT NOT NULL,
-    PersonID INT NOT NULL,
-    JoinDate TIMESTAMP NOT NULL,
-    PRIMARY KEY (ForumID, PersonID),
-    FOREIGN KEY (ForumID) REFERENCES Forum(ForumID) ON DELETE CASCADE,
-    FOREIGN KEY (PersonID) REFERENCES Person(PersonID) ON DELETE CASCADE
+CREATE TABLE tagClass_isSubclassof(
+	TagClassID_A INT,
+	TagClassID_B INT,
+	PRIMARY KEY(TagClassID_A,TagClassID_B),
+	FOREIGN KEY (TagClassID_A) REFERENCES tagClass(tagClassID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (TagClassID_B) REFERENCES tag(tagID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Note: Adjust data types and constraints as needed for your specific requirements.
 
+--Relationships to tag table
+CREATE TABLE message_hasTag(
+	messageID BIGINT ,
+	tagID INT ,
+	PRIMARY KEY (messageID, tagID),
+	FOREIGN KEY (messageID) REFERENCES "message"(messageID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (tagID) REFERENCES tag(tagID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE forum_hasTag(
+	forumID BIGINT ,
+	tagID INT ,
+	PRIMARY KEY (forumID, tagID),
+	FOREIGN KEY (forumID) REFERENCES forum(forumID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (tagID) REFERENCES tag(tagID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- forum-member relationship
+CREATE TABLE forum_hasMember(
+	personID BIGINT ,
+	forumID  BIGINT ,
+	joinDate TIMESTAMP , 
+	PRIMARY KEY (forumID, personID),
+	FOREIGN KEY (forumID) REFERENCES forum(forumID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+--person likes message
+
+CREATE TABLE person_likes_Message(
+	personID BIGINT,
+	messageID BIGINT,
+	creationDate TIMESTAMP,
+	PRIMARY KEY (personID, messageID),
+	FOREIGN KEY (messageID) REFERENCES "message"(messageID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE person_knows_Person(
+	personID_A BIGINT NOT NULL,
+	personID_B BIGINT NOT NULL,
+	creationDate TIMESTAMP NOT NULL,
+	PRIMARY KEY (personID_A, personID_B),
+	FOREIGN KEY (personID_B) REFERENCES "person"(personID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (personID_A) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE Person_hasinterest(
+	personID BIGINT ,
+	tagID INT,    
+	PRIMARY KEY (personID , tagID),
+	FOREIGN KEY (personID) REFERENCES "person"(personID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (tagID) REFERENCES tag(tagID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+--Organization tables
+
+CREATE TABLE organisation(
+	OrganisationID SERIAL PRIMARY KEY,
+	name VARCHAR(255) not null ,
+	url VARCHAR(2048)	
+);
+
+CREATE TABLE university(
+	universityID INT PRIMARY KEY,
+	cityID INT ,
+	FOREIGN KEY (universityID) REFERENCES Organisation(OrganisationID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (cityID) REFERENCES city(cityID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE company(
+	companyID INT PRIMARY KEY,
+	countryID INT ,
+	FOREIGN KEY (companyID) REFERENCES Organisation(OrganisationID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (countryID) REFERENCES country(countryID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- Organization relationships
+
+CREATE TABLE studyAT(
+	personID BIGINT,
+	universityID INT,
+	classYear SMALLINT ,
+	PRIMARY KEY (universityID, personID),
+	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (universityID) REFERENCES university(universityID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE workAT(
+	personID BIGINT   ,
+	companyID INT  ,
+	workFrom SMALLINT   ,
+	PRIMARY KEY (companyID, personID),
+	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (companyID) REFERENCES company(companyID) ON UPDATE CASCADE ON DELETE CASCADE
+);
