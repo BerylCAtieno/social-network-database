@@ -5,9 +5,8 @@ SET search_path TO social_network_db;
 -- Create Place, continent, country, city tables
 
 CREATE TABLE place(
-	placeID SERIAL PRIMARY KEY,
-	name VARCHAR (255),
-	url VARCHAR (2048)
+	placeID INT PRIMARY KEY,
+	name VARCHAR (255)
 );
 
 
@@ -66,7 +65,7 @@ CREATE TABLE language (
 
 -- Forum
 CREATE TABLE forum(
-	forumID BIGSERIAL PRIMARY KEY,
+	forumID BIGINT PRIMARY KEY,
 	title VARCHAR(55),
 	creationDate TIMESTAMP ,
 	moderatorID BIGINT ,
@@ -88,7 +87,7 @@ CREATE TABLE "message"(
 
 -- Post table
 CREATE TABLE post(
-	postID BIGSERIAL PRIMARY KEY,
+	postID BIGINT PRIMARY KEY,
 	imageFile varchar(255),
 	forumID BIGINT ,
 	FOREIGN KEY (postID) REFERENCES "message"(messageID) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -98,9 +97,9 @@ CREATE TABLE post(
 -- comment table
 
 CREATE TABLE "comment"(
-	commentID BIGSERIAL PRIMARY KEY,
+	commentID BIGINT PRIMARY KEY,
 	replyOfPost BIGINT ,
-	replyOfComment BigINT,
+	replyOfComment BIGINT,
 	FOREIGN KEY (replyOfPost) REFERENCES post(postID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (replyOfComment) REFERENCES COMMENT(commentID) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -108,7 +107,7 @@ CREATE TABLE "comment"(
 --tag and tag class tables
 
 Create TABLE tag(
-	tagID SERIAL PRIMARY KEY, 
+	tagID BIGINT PRIMARY KEY, 
 	name VARCHAR(255) NOT NULL, 
 	url VARCHAR (2048) 
 );
@@ -186,7 +185,7 @@ CREATE TABLE Person_hasinterest(
 --Organization tables
 
 CREATE TABLE organisation(
-	OrganisationID SERIAL PRIMARY KEY,
+	OrganisationID INT PRIMARY KEY,
 	name VARCHAR(255) not null ,
 	url VARCHAR(2048)	
 );
