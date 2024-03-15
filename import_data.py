@@ -152,3 +152,38 @@ PersonLikesComment = preprocess_data(PersonLikesComment, datatype_mapping)
 PersonLikesPost = preprocess_data(PersonLikesPost, datatype_mapping)
 
 
+#dataframe subsets
+Company = Organizations[Organizations['type'] == 'company']
+University = Organizations[Organizations['type'] == 'university']
+Continent = Place[Place['type'] == 'continent']
+Country = Place[Place['type'] == 'country']
+City = Place[Place['type'] == 'city']
+
+
+#Import data
+import_data(Place, 'place', sql_mapping['place'], database_params)
+import_data(Continent, 'continent', sql_mapping['continent'], database_params)
+import_data(Country, 'country', sql_mapping['country'], database_params)
+import_data(City, 'city', sql_mapping['city'], database_params)
+import_data(Person, 'person', sql_mapping['person'], database_params)
+import_data(PersonEmail, 'personemail', sql_mapping['personemail'], database_params)
+import_data(PersonLanguage, 'language', sql_mapping['language'], database_params)
+import_data(Forum, 'forum', sql_mapping['forum'], database_params)
+import_data(Post, 'message', sql_mapping['message'], database_params)
+import_data(Post, 'post', sql_mapping['post'], database_params)
+import_data(Comment, 'comment', sql_mapping['comment'], database_params)
+import_data(Tag, 'tag', sql_mapping['tag'], database_params)
+import_data(TagClass, 'tagclass', sql_mapping['tagclass'], database_params)
+import_data(TagClass_isSubclass, 'tagClass_isSubclassof', sql_mapping['tagClass_isSubclassof'], database_params)
+import_data(PostHasTag, 'message_hastag', sql_mapping['message_hastag'], database_params)
+import_data(ForumHasTag, 'forum_hastag', sql_mapping['forum_hastag'], database_params)
+import_data(ForumHasMember, 'forum_hasMember', sql_mapping['forum_hasMember'], database_params)
+import_data(PersonLikesPost, 'person_likes_Message', sql_mapping['person_likes_Message'], database_params)
+import_data(PersonLikesComment, 'person_likes_Comment', sql_mapping['person_likes_Comment'], database_params)
+import_data(PersonKnowsPerson, 'person_knows_Person', sql_mapping['person_knows_Person'], database_params)
+import_data(PersonHasInterest, 'Person_hasinterest', sql_mapping['Person_hasinterest'], database_params)
+import_data(Organizations, 'organisation', sql_mapping['organisation'], database_params)
+import_data(University, 'university', sql_mapping['university'], database_params)
+import_data(Company, 'company', sql_mapping['company'], database_params)
+import_data(PersonStudyAtUniversity, 'studyAT', sql_mapping['studyAT'], database_params)
+import_data(PersonWorkAtCompany, 'workAT', sql_mapping['workAT'], database_params)
