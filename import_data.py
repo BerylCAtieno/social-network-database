@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np 
 import psycopg2
+from psycopg2.extensions import register_adapter, AsIs
 
 def preprocess_data(data, datatype_mapping):
     for column, datatype in datatype_mapping.items():
@@ -9,6 +11,9 @@ def preprocess_data(data, datatype_mapping):
 
 
 def import_data(data, table_name, mapping, database_params):
+
+    register_adapter(np.int64, AsIs)
+    register_adapter(np.int32, AsIs)
 
     query = f"INSERT INTO {table_name} ({', '.join(mapping.keys())}) VALUES ({', '.join(['%s'] * len(mapping))})"
     
