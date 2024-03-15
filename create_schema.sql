@@ -12,7 +12,7 @@ CREATE TABLE place(
 
 CREATE TABLE continent(
 	continentID INT,
-	primary key (continentID),
+	PRIMARY KEY (continentID),
     FOREIGN KEY (continentID) REFERENCES place(placeID) ON UPDATE NO ACTION ON DELETE CASCADE	
 );
 
@@ -38,8 +38,8 @@ CREATE TABLE person (
 	firstName VARCHAR(25) NOT NULL,
 	lastName VARCHAR(25)  NOT NULL,
 	gender VARCHAR(25),
-	birthday DATE ,
-	creationDate TIMESTAMP check ( NOW()::timestamp > creationDate),
+	birthday DATE CHECK (birthday < CURRENT_DATE),
+	creationDate TIMESTAMP,
 	locationIP  VARCHAR(255),
 	browserUsed VARCHAR(255),
 	cityID INT,
@@ -57,18 +57,18 @@ CREATE TABLE personemail(
 
 -- Person Language
 CREATE TABLE language (
-	 languageID BIGINT,
+	 personID BIGINT,
 	 language VARCHAR(255) NOT NULL,
-	 PRIMARY KEY (languageID, language),
-	 FOREIGN KEY (languageID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
+	 PRIMARY KEY (personID, language),
+	 FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Forum
 CREATE TABLE forum(
 	forumID BIGINT PRIMARY KEY,
 	title VARCHAR(55),
-	creationDate TIMESTAMP ,
-	moderatorID BIGINT ,
+	creationDate TIMESTAMP,
+	moderatorID BIGINT,
 	FOREIGN KEY (moderatorID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -76,7 +76,7 @@ CREATE TABLE "message"(
 	messageID BIGINT PRIMARY KEY,
 	"content" VARCHAR(255),
 	"length" INT, 
-	creator BIGINT ,
+	creator BIGINT,
 	countryID BIGINT,
 	creationDate TIMESTAMP,
 	browserused  VARCHAR(55),
@@ -89,7 +89,7 @@ CREATE TABLE "message"(
 CREATE TABLE post(
 	postID BIGINT PRIMARY KEY,
 	imageFile varchar(255),
-	forumID BIGINT ,
+	forumID BIGINT,
 	FOREIGN KEY (postID) REFERENCES "message"(messageID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (forumID) REFERENCES forum(forumID) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -98,7 +98,7 @@ CREATE TABLE post(
 
 CREATE TABLE "comment"(
 	commentID BIGINT PRIMARY KEY,
-	replyOfPost BIGINT ,
+	replyOfPost BIGINT,
 	replyOfComment BIGINT,
 	FOREIGN KEY (replyOfPost) REFERENCES post(postID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (replyOfComment) REFERENCES COMMENT(commentID) ON UPDATE CASCADE ON DELETE CASCADE
@@ -113,8 +113,8 @@ Create TABLE tag(
 );
 
 CREATE TABLE tagClass(
-	tagClassID int PRIMARY KEY ,
-	tClassName varchar(255) not null, 
+	tagClassID int PRIMARY KEY,
+	tagClassName varchar(255) not null, 
 	url varchar(2048)  
 );
 
@@ -129,16 +129,16 @@ CREATE TABLE tagClass_isSubclassof(
 
 --Relationships to tag table
 CREATE TABLE message_hasTag(
-	messageID BIGINT ,
-	tagID INT ,
+	messageID BIGINT,
+	tagID INT,
 	PRIMARY KEY (messageID, tagID),
 	FOREIGN KEY (messageID) REFERENCES "message"(messageID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (tagID) REFERENCES tag(tagID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE forum_hasTag(
-	forumID BIGINT ,
-	tagID INT ,
+	forumID BIGINT,
+	tagID INT,
 	PRIMARY KEY (forumID, tagID),
 	FOREIGN KEY (forumID) REFERENCES forum(forumID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (tagID) REFERENCES tag(tagID) ON UPDATE CASCADE ON DELETE CASCADE
@@ -146,11 +146,10 @@ CREATE TABLE forum_hasTag(
 
 -- forum-member relationship
 CREATE TABLE forum_hasMember(
-	personID BIGINT ,
-	forumID  BIGINT ,
-	joinDate TIMESTAMP , 
+	personID BIGINT,
+	forumID  BIGINT,
+	joinDate TIMESTAMP, 
 	PRIMARY KEY (forumID, personID),
-	FOREIGN KEY (forumID) REFERENCES forum(forumID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -165,6 +164,15 @@ CREATE TABLE person_likes_Message(
 	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE TABLE person_likes_Comment(
+	personID BIGINT,
+	commentID BIGINT,
+	creationDate TIMESTAMP,
+	PRIMARY KEY (personID, commentID),
+	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (commentID) REFERENCES comment(commentID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 CREATE TABLE person_knows_Person(
 	personID_A BIGINT NOT NULL,
 	personID_B BIGINT NOT NULL,
@@ -175,9 +183,9 @@ CREATE TABLE person_knows_Person(
 );
 
 CREATE TABLE Person_hasinterest(
-	personID BIGINT ,
+	personID BIGINT,
 	tagID INT,    
-	PRIMARY KEY (personID , tagID),
+	PRIMARY KEY (personID, tagID),
 	FOREIGN KEY (personID) REFERENCES "person"(personID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (tagID) REFERENCES tag(tagID) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -186,20 +194,20 @@ CREATE TABLE Person_hasinterest(
 
 CREATE TABLE organisation(
 	OrganisationID INT PRIMARY KEY,
-	name VARCHAR(255) not null ,
+	name VARCHAR(255) not null,
 	url VARCHAR(2048)	
 );
 
 CREATE TABLE university(
 	universityID INT PRIMARY KEY,
-	cityID INT ,
+	cityID INT,
 	FOREIGN KEY (universityID) REFERENCES Organisation(OrganisationID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (cityID) REFERENCES city(cityID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE company(
 	companyID INT PRIMARY KEY,
-	countryID INT ,
+	countryID INT,
 	FOREIGN KEY (companyID) REFERENCES Organisation(OrganisationID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (countryID) REFERENCES country(countryID) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -209,16 +217,16 @@ CREATE TABLE company(
 CREATE TABLE studyAT(
 	personID BIGINT,
 	universityID INT,
-	classYear SMALLINT ,
+	classYear SMALLINT,
 	PRIMARY KEY (universityID, personID),
 	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (universityID) REFERENCES university(universityID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE workAT(
-	personID BIGINT   ,
-	companyID INT  ,
-	workFrom SMALLINT   ,
+	personID BIGINT,
+	companyID INT,
+	workFrom SMALLINT,
 	PRIMARY KEY (companyID, personID),
 	FOREIGN KEY (personID) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (companyID) REFERENCES company(companyID) ON UPDATE CASCADE ON DELETE CASCADE
