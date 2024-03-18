@@ -19,12 +19,18 @@ def import_data(data, table_name, mapping, database_params):
     
     try:
         connection = psycopg2.connect(**database_params)
+
+        schema_name = 'social_network_db'
+        with connection.cursor() as cursor:
+            cursor.execute("SET search_path TO {}".format(schema_name))
+
         with connection.cursor() as cursor:
             for index, row in data.iterrows():
                 values = [row[column] for column in mapping.values()]
                 cursor.execute(query, values)
             connection.commit()
             print("Data insertion successful!")
+
     except psycopg2.Error as e:
         print(f"Error: {e}")
     finally:
@@ -82,7 +88,7 @@ datatype_mapping = {
     'Post': {'id': 'int', 'imageFile': 'str', 'creationDate': 'datetime64[ns]', 'locationIP': 'str', 'browserUsed': 'str',
        'language': 'str', 'content': 'str', 'length': 'int', 'creator': 'int', 'Forum.id': 'int', 'place': 'int'},
     'Comment': {'id': 'int', 'creationDate': 'datetime64[ns]', 'locationIP': 'str', 'browserUsed': 'str', 'content': 'str', 'length': 'int',
-       'creator': 'int', 'place': 'int', 'replyOfPost': 'int', 'replyOfComment;': 'int'},
+       'creator': 'int', 'place': 'int', 'replyOfPost': 'str', 'replyOfComment;': 'str'},
     'Comment_hastag': {'Comment.id': 'int', 'Tag.id': 'int'},
     'Tag': {'id': 'int', 'name': 'str', 'url': 'str'},
     'TagClass': {'id': 'int', 'name': 'str', 'url': 'str'},
@@ -99,37 +105,38 @@ datatype_mapping = {
 
 sql_mapping = {
 
-    'place': {'id': 'PlaceID', 'name': 'name'},
-    'continent': {'id': 'continentID'},
-    'country': {'id': 'countryID', 'isPartOf': 'isPartOf'},
-    'city':{'id': 'cityID', 'isPartOf': 'isPartOf'},
-    'person': {'id': 'personID', 'firstName': 'firstName', 'lastName': 'lastName', 'gender': 'gender', 'birthday': 'birthday', 'creationDate': 'creationDate',
-       'locationIP': 'locationIP', 'browserUsed': 'browserUsed', 'place': 'cityID'},
-    'personemail': {'Person.id': 'personID', 'email': 'email'},
-    'language': {'Person.id': 'personID', 'language': 'language'},
-    'forum': {'id': 'forumID', 'title': 'title', 'creationDate': 'creationDate', 'moderator': 'moderatorID'},
-    'message': {'id': 'messageID', 'content': 'content', 
+    'place': {'PlaceID':'id', 'name': 'name'},
+    'continent': {'continentID':'id'},
+    'country': {'countryID':'id', 'isPartOf': 'isPartOf'},
+    'city':{'cityID':'id', 'isPartOf': 'isPartOf'},
+    'person': {'personID':'id', 'firstName': 'firstName', 'lastName': 'lastName', 'gender': 'gender', 'birthday': 'birthday', 'creationDate': 'creationDate',
+       'locationIP': 'locationIP', 'browserUsed': 'browserUsed', 'cityID':'place'},
+    'personemail': {'personID': 'Person.id', 'email': 'email'},
+    'language': {'personID':'Person.id', 'language': 'language'},
+    'forum': {'forumID':'id', 'title': 'title', 'creationDate': 'creationDate', 'moderatorID':'moderator'},
+    'message': {'messageID':'id', 'content': 'content', 
                 'length': 'length', 'creator': 'creator', 
-                'place': 'countryID','creationDate': 'creationDate', 
+                'countryID':'place','creationDate': 'creationDate', 
                 'browserUsed': 'browserUsed', 'locationIP': 'locationIP'},
-    'post': {'id': 'postID', 'imageFile': 'imageFile', 'Forum.id': 'ForumID'},
-    'comment': {'id': 'CommentID', 'creationDate': 'creationDate', 
-                'replyOfPost': 'replyOfPost', 'replyOfComment;': 'replyOfComment'},
-    'tag': {'id': 'TagID', 'name': 'name', 'url': 'url'},
-    'tagclass': {'id': 'tagClassID', 'name': 'tagClassName'},
-    'tagClass_isSubclassof': {'TagClass.id': 'TagClassID_A', 'TagClass.id.1': 'TagClassID_B'},
-    'message_hastag': {'Comment.id': 'messageID', 'Tag.id': 'tagID'},
-    'forum_hastag': {'Post.id': 'forumID', 'Tag.id': 'tagID'},
-    'forum_hasMember': {'Forum.id': 'forumID', 'Person.id': 'personID', 'joinDate': 'joinDate'},
-    'person_likes_Message': {'Person.id': 'personID', 'Post.id': 'messageID', 'creationDate': 'creationDate'},
-    'person_likes_Comment': {'Person.id': 'PersonID', 'Comment.id': 'CommentID', 'creationDate': 'creationDate'},
-    'person_knows_Person': {'Person.id': 'PersonID_A', 'Person.id.1': 'PersonID_A', 'creationDate': 'creationDate'},
-    'Person_hasinterest': {'Person.id': 'personID', 'Tag.id': 'tagID'},
-    'organisation': {'id': 'OrganisationID', 'name': 'name', 'url': 'url'},
-    'university': {'id': 'universityID', 'place': 'cityID'}, 
-    'company': {'id': 'companyID', 'place': 'countryID'},
-    'studyAT': {'Person.id': 'personID', 'Organisation.id': 'universityID', 'classYear': 'classYear'},
-    'workAT': {'Person.id': 'personID', 'Organisation.id': 'companyID', 'workFrom': 'workFrom'}
+    'post': {'postID':'id', 'imageFile': 'imageFile', 'ForumID':'Forum.id'},
+    'comment': {'CommentID':'id', 'creationDate': 'creationDate', 'LocationIP': 'locationIP',
+                'BrowserUsed': 'browserUsed', 'Content': 'content', 'Length': 'length', 'Creator': 'creator',
+                'replyOfPost': 'replyOfPost', 'replyOfComment': 'replyOfComment;'},
+    'tag': {'TagID':'id', 'name': 'name', 'url': 'url'},
+    'tagclass': {'tagClassID':'id', 'tagClassName':'name'},
+    'tagClass_isSubclassof': {'TagClassID_A':'TagClass.id', 'TagClassID_B':'TagClass.id.1'},
+    'message_hastag': {'messageID':'Post.id', 'tagID':'Tag.id'},
+    'forum_hastag': {'forumID':'Forum.id', 'tagID':'Tag.id'},
+    'forum_hasMember': {'forumID':'Forum.id', 'personID':'Person.id', 'joinDate': 'joinDate'},
+    'person_likes_Message': {'personID':'Person.id', 'messageID':'Post.id', 'creationDate': 'creationDate'},
+    'person_likes_Comment': {'PersonID':'Person.id', 'CommentID':'Comment.id', 'creationDate': 'creationDate'},
+    'person_knows_Person': {'PersonID_A':'Person.id', 'PersonID_A':'Person.id.1', 'creationDate': 'creationDate'},
+    'Person_hasinterest': {'personID':'Person.id', 'tagID':'Tag.id'},
+    'organisation': {'OrganisationID':'id', 'name': 'name', 'url': 'url'},
+    'university': {'universityID':'id', 'cityID':'place'}, 
+    'company': {'companyID':'id', 'countryID':'place'},
+    'studyAT': {'personID':'Person.id', 'universityID':'Organisation.id', 'classYear': 'classYear'},
+    'workAT': {'personID':'Person.id', 'companyID':'Organisation.id', 'workFrom': 'workFrom'}
 
 }
 
@@ -163,7 +170,6 @@ University = Organizations[Organizations['type'] == 'university']
 Continent = Place[Place['type'] == 'continent']
 Country = Place[Place['type'] == 'country']
 City = Place[Place['type'] == 'city']
-
 
 #Import data
 import_data(Place, 'place', sql_mapping['place'], database_params)
