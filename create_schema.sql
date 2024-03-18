@@ -96,12 +96,16 @@ CREATE TABLE post(
 
 -- comment table
 
-CREATE TABLE "comment"(
-	commentID BIGINT PRIMARY KEY,
-	replyOfPost BIGINT,
-	replyOfComment BIGINT,
-	FOREIGN KEY (replyOfPost) REFERENCES post(postID) ON UPDATE CASCADE ON DELETE CASCADE,
-	FOREIGN KEY (replyOfComment) REFERENCES COMMENT(commentID) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE Comment (
+	CommentID BIGINT PRIMARY KEY,
+    CreationDate TIMESTAMP,
+	LocationIP VARCHAR(50),
+	BrowserUsed VARCHAR(50),
+	Content VARCHAR(255),
+	Length INT,
+	Creator BIGINT,
+	replyOfPost VARCHAR(50),
+	replyOfComment VARCHAR(50)
 );
 
 --tag and tag class tables
@@ -174,9 +178,9 @@ CREATE TABLE person_likes_Comment(
 );
 
 CREATE TABLE person_knows_Person(
-	personID_A BIGINT NOT NULL,
-	personID_B BIGINT NOT NULL,
-	creationDate TIMESTAMP NOT NULL,
+	personID_A BIGINT,
+	personID_B BIGINT,
+	creationDate TIMESTAMP,
 	PRIMARY KEY (personID_A, personID_B),
 	FOREIGN KEY (personID_B) REFERENCES "person"(personID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (personID_A) REFERENCES person(personID) ON UPDATE CASCADE ON DELETE CASCADE
