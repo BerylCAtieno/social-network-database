@@ -130,7 +130,7 @@ sql_mapping = {
     'forum_hasMember': {'forumID':'Forum.id', 'personID':'Person.id', 'joinDate': 'joinDate'},
     'person_likes_Message': {'personID':'Person.id', 'messageID':'Post.id', 'creationDate': 'creationDate'},
     'person_likes_Comment': {'PersonID':'Person.id', 'CommentID':'Comment.id', 'creationDate': 'creationDate'},
-    'person_knows_Person': {'PersonID_A':'Person.id', 'PersonID_A':'Person.id.1', 'creationDate': 'creationDate'},
+    'person_knows_Person': {'PersonID_A':'Person.id', 'PersonID_B':'Person.id.1', 'creationDate': 'creationDate'},
     'Person_hasinterest': {'personID':'Person.id', 'tagID':'Tag.id'},
     'organisation': {'OrganisationID':'id', 'name': 'name', 'url': 'url'},
     'university': {'universityID':'id', 'cityID':'place'}, 
