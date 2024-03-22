@@ -118,7 +118,8 @@ import_data(data, "target_table", mapping, database_params)
 ## Part 2: SQL Queries, Views, and Triggers
 
 This part of the project on creating views and executing various queries on the database created in Part 1. 
-All SQL statements for this part included in [views_queries.sql](.\Views and Queries\views_queries.sql)
+All SQL statements for this part included in [views_queries.sql](./Views%20and%20Queries/views_queries.sql).
+
 Here's a breakdown of what was accomplished:
 
 ### Part 2(a): View Creation
