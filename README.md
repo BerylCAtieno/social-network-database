@@ -116,3 +116,39 @@ import_data(data, "target_table", mapping, database_params)
 ```
 
 ## Part 2: SQL Queries, Views, and Triggers
+
+This part of the project on creating views and executing various queries on the database created in Part 1. 
+All SQL statements for this part included in [views_queries.sql](.\Views and Queries\views_queries.sql)
+Here's a breakdown of what was accomplished:
+
+### Part 2(a): View Creation
+
+To facilitate handling of friendship relationships, which were stored as directed relationships, I created a view named pkp_symmetric. This view contains both directions of the friendship relationship, making it easier to execute queries related to friendships.
+
+### Part 2(b): Queries
+1. **Count of European Cities with Universities**: Identified the number of different European cities where universities are located.
+
+2. **Forum Posts Authored by the Youngest Person**: Determined the number of forum posts authored by the youngest person in the database.
+
+3. **Comments on Posts by Country**: Calculated the number of comments on posts from each country.
+
+4. **Cities with Most Users**: Identified the cities from which the most users originate.
+
+5. **Friends of 'Hans Johansson'**: Listed individuals who are friends with 'Hans Johansson'.
+
+6. **Real Friends-of-a-Friend of 'Hans Johansson'**: Identified the "real" friends-of-a-friend of 'Hans Johansson'.
+
+7. **Users in Forums with 'Mehmet Koksal'**: Determined users who are members of all forums where 'Mehmet Koksal' is also a member.
+
+8. **Distribution of Users by Continent**: Provided the percentage distribution of users based on their continent of origin.
+
+9. **Forums with More Posts Than Average**: Listed forums with more posts than the average number of posts across all forums.
+
+10. **Persons Friends with Most Liked Post Creator**: Identified persons who are friends with the creator of the most liked post.
+
+11. **Connected Persons to 'Jun Hu'**: Identified persons directly or indirectly connected to 'Jun Hu' (friends) and provided the minimum distance to 'Jun Hu'.
+
+12. **Extended Connected Persons Query**: Extended the previous query to also output the minimum path between connected users.
+
+### Part 2(c): Database Changes
+Implemented a mechanism to document the termination of employment relationships, deleting corresponding entries in the `workAt` table and logging these deletions in a separate table named `Former_employees_table`.
