@@ -1,7 +1,14 @@
 SET search_path TO social_network_db;
 
 
--- PART 2(a): Sichtenerstellung
+-- PART 2(a): View Creation
+
+/*
+The friendship relationship is stored as a directed relationship. To comfortably solve
+queries regarding the friendship relationship, the relationships should be stored as
+undirected. In this regard, you should create a view "pkp_symmetric" that contains
+both directions.
+*/
 
 CREATE VIEW pkp_symmetric AS
 SELECT personID_A AS personID_1, personID_B AS personID_2, creationDate
@@ -13,7 +20,7 @@ FROM person_knows_Person;
 SELECT * FROM pkp_symmetric;
 
 /*
-Ergebnisdatensatz
+Sample output
 
   personid_1   |   personid_2   |      creationdate
 ----------------+----------------+-------------------------
@@ -25,9 +32,9 @@ Ergebnisdatensatz
 
 */
 
---PART 2(b): Anfragen auf der Datenbank 
+--PART 2(b): Views and Queries
 
---1) In wie vielen verschiedenen europäischen Städten gibt es eine Universität?
+--1) In how many different European cities are there universities?
 
 SELECT COUNT(uni.universityID)
 FROM university as uni
@@ -41,10 +48,10 @@ JOIN place
     ON place.placeID = continent.continentID
 WHERE place."name"='Europe';
 
--- Ergebnisdatensatz: 1335
+-- Output: 1335
 
 
--- 2) Wie viele Forenbeiträge (Posts) hat die jüngste Person verfasst
+-- 2) How many forum posts has the youngest person authored
 
 SELECT person.firstname, person.lastname, post.postid 
 FROM post  
@@ -53,7 +60,7 @@ JOIN person ON "message".creator = person.personid
 WHERE person.birthday = (SELECT MAX(person.birthday)FROM person );
 
 /*
-Ergebnisdatensatz
+Output
 
  firstname | lastname |    postid
 -----------+----------+--------------
@@ -64,9 +71,9 @@ Ergebnisdatensatz
  Paul      | Becker   | 128849026587
 */
 
--- 3) Wie viele Kommentare zu Posts gibt es aus jedem Land
+-- 3) How many comments on posts are there from each country
 
-SELECT  place.name , COUNT(COALESCE(post.postid,0)) as Kommentaranzahl 
+SELECT  place.name , COUNT(COALESCE(post.postid,0)) as comment_count 
 FROM post 
 JOIN "message" 
 ON post.postid = "message".messageid
@@ -74,10 +81,10 @@ JOIN country
 ON "message".countryid= country.countryid
 join place on country.countryid=place.placeid
 GROUP BY place.name 
-ORDER BY Kommentaranzahl;
+ORDER BY comment_count;
 
 /*
-Ergebnisdatensatz
+Output
          name          | kommentaranzahl
 ------------------------+-----------------
  Laos                   |               1
@@ -94,23 +101,23 @@ Ergebnisdatensatz
  Yemen                  |               1
 */
 
--- 4) Aus welchen Städten stammen die meisten Nutzer?
+-- 4) From which cities do most users come
 
-SELECT place."name", sum(person.cityid) AS Einwohnerzahl from person
+SELECT place."name", sum(person.cityid) AS "Population" from person
 JOIN city ON city.cityid = person.cityid
 JOIN place ON place.placeid = city.cityid
 GROUP BY place."name"
-order by Einwohnerzahl DESC
+order by "Population" DESC
 LIMIT 1;
 
 /*
-Ergebnisdatensatz
-   name      | einwohnerzahl
+Output
+   name      | Population
 ----------------+---------------
  Rahim_Yar_Khan |          1588
 */
 
--- 5) Mit wem ist 'Hans Johansson' befreundet?
+-- 5) Who is 'Hans Johansson' friends with?
 
 SELECT person.personid, person.firstname,person.lastname FROM person
 WHERE person.personid IN (
@@ -119,7 +126,7 @@ WHERE person.personid IN (
     WHERE person.lastname = 'Johansson' And person.firstname = 'Hans');
 
 /*
-Ergebnisdatensatz
+Output
 
     personid    |    firstname     |  lastname
 ----------------+------------------+------------
@@ -135,7 +142,7 @@ Ergebnisdatensatz
 (9 rows)
 */
 
--- 6) Wer sind die "echten" Freundesfreunde (friends-of-a-friend) von 'Hans Johansson'?
+-- 6) Who are the "real" friends-of-a-friend of 'Hans Johansson'?
 
 SELECT  DISTINCT person.personid,person.firstname,person.lastname 
 FROM person 
@@ -155,7 +162,7 @@ AND person.personid not in (
 ) ORDER BY person.lastname;
 
 /*
-Ergebnisdatensatz
+Output
 
     personid    |  firstname  |  lastname
 ----------------+-------------+------------
@@ -184,7 +191,7 @@ Ergebnisdatensatz
 (22 rows)
 */
 
--- 7) Welche Nutzer sind Mitglied in allen Foren, in denen auch 'Mehmet Koksal' Mitglied ist (Angabe Name)?
+-- 7) Which users are members in all forums where 'Mehmet Koksal' is also a member?
 
 DROP TABLE IF EXISTS forumIdtemp;
 CREATE TABLE forumIdtemp (
@@ -223,7 +230,7 @@ WHERE forum_hasmember.forumid=(
     WHERE forumIdtemp.id=3);
 
 /*
-Ergebnisdatensatz
+Output
 
  firstname | lastname
 -----------+----------
@@ -234,11 +241,11 @@ Ergebnisdatensatz
 (4 rows)
 */
 
--- 8) Geben Sie die prozentuale Verteilung der Nutzer bezüglich ihrer Herkunft aus verschiedenen Kontinenten an.
+-- 8) Provide the percentage distribution of users by their origin from different continents.
 
 SELECT place."name", 
     COUNT (person.personid)*100/(SELECT COUNT(person.personid)
-                                FROM person) AS Anteil
+                                FROM person) AS "percentage"
 FROM person 
 JOIN city ON city.cityid = person.cityid
 JOIN country ON country.countryid = city.ispartof
@@ -247,8 +254,9 @@ JOIN place ON place.placeid = continentid
 GROUP BY place."name";
 
 /*
-Ergebnisdatensatz
-     name      | anteil
+Output
+
+     name      | percentage
 ---------------+--------
  North_America |      9
  South_America |      4
@@ -258,9 +266,9 @@ Ergebnisdatensatz
 (5 rows)
 */
 
--- 9) Welche Foren enthalten mehr Posts als die durchschnittliche Anzahl von Posts in Foren
+-- 9) Which forums contain more posts than the average number of posts in forums
 
-SELECT forum.title, COUNT(post.postid) AS Anzahl
+SELECT forum.title, COUNT(post.postid) AS post_count
 FROM forum 
 JOIN post ON forum.forumid=post.forumid
 GROUP BY forum.title
@@ -269,9 +277,9 @@ HAVING COUNT(post.postid) > (
 ) ORDER BY forum.title ;
 
 /*
-Ergebnisdatensatz
+Output
 
-                 title                   | anzahl
+                 title                   | post_count
 ------------------------------------------+--------
  Album 0 of Abdul Haris Tobing            |     17
  Album 0 of Alejandro Rodriguez           |     20
@@ -285,8 +293,8 @@ Ergebnisdatensatz
  Album 0 of Jie Li                        |     11
 */
 
--- 10) Welche Personen sind mit der Person befreundet, die die meisten Likes auf einen Post bekommen hat? 
---     Sortieren Sie die Ausgabe alphabetisch nach dem Nachnamen.
+-- 10) Which persons are friends with the person who received the most likes on a post?
+--     Sort the output alphabetically by last name.
 
 SELECT  person.firstname, person.lastname 
 FROM person
@@ -307,7 +315,7 @@ WHERE person.personid in (
 ORDER BY person.lastname;
 
 /*
-Ergebnisdatensatz
+Output
 
  firstname | lastname
 -----------+-----------
@@ -324,7 +332,8 @@ Ergebnisdatensatz
 (10 rows)
 */
 
--- 11) Welche Personen sind direkt oder indirekt mit 'Jun Hu' (id 94) verbunden (befreundet)? 
+-- 11) Which persons are directly or indirectly connected to 'Jun Hu' (id 94) (friends)? 
+--     Provide for each person the minimum distance to Jun
 
 WITH RECURSIVE DirectFriends AS (
   SELECT personID_B AS personID, 1 AS distance
@@ -340,7 +349,7 @@ FROM DirectFriends df
 JOIN person p ON df.personID = p.personID;
 
 /*
-Ergebnisdatensatz
+Output
 
    personid    |    firstname     |  lastname  | distance
 ----------------+------------------+------------+----------
@@ -357,7 +366,7 @@ Ergebnisdatensatz
  16492674416689 | Lin              | Zhang      |        2
 */
 
--- 12) Erweitern Sie die Anfrage zu Aufgabe 11 indem Sie zusätzlich zur Distanz den minimalen Pfad zwischen den Nutzern ausgeben. 
+-- 12) Extend the query for Task 11 by also outputting the minimum path between the users in addition to the distance.
 
 WITH RECURSIVE DirectFriends AS (
   SELECT personID_B AS personID, 1 AS distance, ARRAY[personID_B] AS path
@@ -373,7 +382,7 @@ FROM DirectFriends df
 JOIN person p ON df.personID = p.personID;
 
 /*
-Ergebnisdatensatz
+Output
 
     personid    |    firstname     |  lastname  | distance |                                                    path                                                    ----------------+------------------+------------+----------+------------------------------------------------------------------------------------------------------------  8796093022217 | Alim             | Guliyev    |        1 | {8796093022217}
   3298534883365 | Wei              | Wei        |        1 | {3298534883365}
@@ -388,7 +397,19 @@ Ergebnisdatensatz
 */
 
 
---PART 2(C): Änderungen in der erzeugten Datenbank
+--PART 2(C): Changes in the Generated Database
+
+/*
+A mechanism should be implemented to document the termination of an employment relationship. 
+The corresponding entry in `person_workAt_company` should be deleted using an SQL statement. 
+To be able to trace the data manipulation, the deletion process should be logged in a separate table. 
+Additionally, it should be noted when the employment relationship was terminated (based on the deletion
+timestamp). 
+The logging should be done automatically when an employee ends their
+employment at a company (deletion in `person_workAt_company`). 
+Formulate a delete statement that shows that your mechanism works.
+
+*/
 
 DROP TABLE IF EXISTS Former_employees_table;
 CREATE TABLE Former_employees_table (
