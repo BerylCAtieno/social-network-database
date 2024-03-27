@@ -124,7 +124,7 @@ Here's a breakdown of what was accomplished:
 
 ### Part 2(a): View Creation
 
-To facilitate handling of friendship relationships, which were stored as directed relationships, I created a view named pkp_symmetric. This view contains both directions of the friendship relationship, making it easier to execute queries related to friendships.
+To facilitate handling of friendship relationships, which were stored as directed relationships, I created a view named `pkp_symmetric`. This view contains both directions of the friendship relationship, making it easier to execute queries related to friendships.
 
 ### Part 2(b): Queries
 1. **Count of European Cities with Universities**: Identified the number of different European cities where universities are located.
