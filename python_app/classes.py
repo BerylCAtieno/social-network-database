@@ -3,6 +3,7 @@ from sqlalchemy import Integer, String, BigInteger, SmallInteger, Date, TIMESTAM
 from sqlalchemy import ForeignKey, PrimaryKeyConstraint, ForeignKeyConstraint
 
 import datetime
+from typing import List 
 
 
 class Base(DeclarativeBase):
@@ -26,7 +27,7 @@ class Continent(Place):
     continentID:Mapped[int] = mapped_column(ForeignKey('place.placeID'), primary_key=True)
 
     __mapper_args__ = {
-        "polymorphic_identity": "continentID",
+        "polymorphic_identity": "continent",
     }
     
     extend_existing=True
@@ -38,7 +39,7 @@ class Country(Place):
     isPartOf:Mapped[int] = mapped_column(ForeignKey('continent.continentID'))
 
     __mapper_args__ = {
-        "polymorphic_identity": "countryID",
+        "polymorphic_identity": "country",
     }
 
     extend_existing=True
@@ -52,7 +53,7 @@ class City(Place):
     isPartOf:Mapped[int] = mapped_column(ForeignKey('country.countryID'))
 
     __mapper_args__ = {
-        "polymorphic_identity": "cityID",
+        "polymorphic_identity": "city",
     }
 
     extend_existing=True
@@ -136,8 +137,7 @@ class Post(Message):
     forumID:Mapped[int] = mapped_column(BigInteger, ForeignKey('forum.forumID'))
 
     __mapper_args__ = {
-        'polymorphic_identity': 'postID',
-        'polymorphic_on': postID
+        'polymorphic_identity': 'post'
     }
 
 class Comment(Base):
@@ -279,7 +279,7 @@ class Company(Organisation):
     countryID:Mapped[int] = mapped_column(Integer, ForeignKey('country.countryID'))
 
     __mapper_args__ = {
-        "polymorphic_identity": "companyID",
+        "polymorphic_identity": "company",
     }
     
     extend_existing=True
@@ -291,7 +291,7 @@ class University(Organisation):
     cityID:Mapped[int] = mapped_column(Integer, ForeignKey('city.cityID'))
     
     __mapper_args__ = {
-        "polymorphic_identity": "universityID",
+        "polymorphic_identity": "university",
     }
     
     extend_existing=True
