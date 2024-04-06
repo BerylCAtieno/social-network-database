@@ -66,7 +66,7 @@ class Person(Base):
     firstName:Mapped[str] = mapped_column(String(25), nullable=False)
     lastName :Mapped[str]= mapped_column(String(25), nullable=False)
     gender:Mapped[str] = mapped_column(String(25))
-    birthday:Mapped[datetime.datetime] = mapped_column(nullable=False)
+    birthday:Mapped[datetime.date] = mapped_column(nullable=False)
     creationDate = mapped_column(TIMESTAMP)
     locationIP:Mapped[str] = mapped_column(String(255))
     browserUsed:Mapped[str] = mapped_column(String(255))
