@@ -1,4 +1,4 @@
-from sqlalchemy import Table
+from sqlalchemy import Table, Column, Integer
 from create_engine import engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
@@ -128,3 +128,10 @@ class StudyAt(Base):
 
 class WorkAt(Base):
     __table__ = Table('workat', Base.metadata, autoload=True, autoload_with=engine)
+
+
+class pkp_symmetric(Base):
+    __table__ = Table('pkp_symmetric', Base.metadata, 
+                      Column('personid_a', Integer, primary_key=True), 
+                      Column('personid_b', Integer, primary_key=True), 
+                      extend_existing=True, autoload_with=engine)
