@@ -1,6 +1,6 @@
 from sqlalchemy import Table, Column, Integer
 from create_engine import engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -38,6 +38,12 @@ class City(Place):
 ""
 class Person(Base):
     __table__ = Table('person', Base.metadata, autoload_with=engine)
+
+    studyorganisation = relationship('University', secondary='studyat', back_populates='students')
+    workorganisation = relationship('Company', secondary='workat', back_populates='employees')
+
+    """primaryjoin='Person.id == StudyAt.person_id',
+                                     secondaryjoin=\"StudyOrganisation.id == StudyAt.studyorganisation_id\")"""
     
 
 class PersonEmail(Base):
@@ -116,11 +122,15 @@ class Company(Organisation):
         "polymorphic_identity": "company",
     }
 
+    employees = relationship('Person', secondary='workat', back_populates='workorganisation')
+
 class University(Organisation):
     
     __mapper_args__ = {
         "polymorphic_identity": "university",
     }
+
+    students = relationship('Person', secondary='studyat', back_populates='studyorganisation')
 
 class StudyAt(Base):
     __table__ = Table('studyat', Base.metadata, autoload=True, autoload_with=engine)
