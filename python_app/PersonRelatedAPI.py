@@ -18,19 +18,18 @@ def getProfile(pid):
     cityquery = classes.session.query(classes.City).filter_by(placeid=persquery.first().placeid)
     countryquery = classes.session.query(classes.Country).filter_by(placeid=cityquery.first().ispartof) # originally instead of .filter_by -> .join(classes.City, tr.City.ispartof==tr.Country.placeid).filter(classes.City.placeid == persquery.first().placeid)
     continentquery = classes.session.query(classes.Continent).filter_by(placeid=countryquery.first().ispartof)
-    print('Wohnort: ' + str(cityquery.first().locationname) + ', ' + str(countryquery.first().locationname) + ', ' + str(continentquery.first().locationname))
+    print('Wohnort: ' + str(cityquery.first().name) + ', ' + str(countryquery.first().name) + ', ' + str(continentquery.first().name))
 
 #Testing:
 #getProfile(12094627905604)
-#12094627905604
-#2199023255625
+    #12094627905604
 
 def getCommonInterestsOfMyFriends(pid):
-    persontags = classes.session.query(classes.Person_has_interest).filter_by(personid=pid).all()
+    persontags = classes.session.query(classes.Person_hasinterest).filter_by(personid=pid).all()
     taglist = []
     for tag in persontags:
         taglist.append(tag.tagid)
-    query = classes.session.query(classes.Person_has_interest).join(classes.Pkp_symmetric, classes.Pkp_symmetric.friendid==classes.Person_has_interest.personid).filter(classes.Person_has_interest.tagid.in_(taglist), classes.Pkp_symmetric.personid == pid)
+    query = classes.session.query(classes.Person_hasinterest).join(classes.pkp_symmetric, classes.pkp_symmetrickp_symmetric.personid_b==classes.Person_hasinterest.personid_a).filter(classes.Person_hasinterest.tagid.in_(taglist), classes.pkp_symmetric.personid_a == pid)
 
     results = query.all()
     for row in results:
@@ -41,24 +40,23 @@ def getCommonInterestsOfMyFriends(pid):
 #getCommonInterestsOfMyFriends(8796093022217)
 
 def getCommonFriends(pid, fid):
-    fidfriends = classes.session.query(classes.Pkp_symmetric).filter_by(personid=fid).all()
+    fidfriends = classes.session.query(classes.pkp_symmetric).filter_by(personid=fid).all()
     friendslist = []
     for friend in fidfriends:
-        friendslist.append(friend.friendid)
-    query = classes.session.query(classes.Pkp_symmetric).filter(classes.Pkp_symmetric.personid == pid, classes.Pkp_symmetric.friendid.in_(friendslist))
+        friendslist.append(friend.personid_b)
+    query = classes.session.query(classes.pkp_symmetric).filter(classes.pkp_symmetric.personid_a == pid, classes.pkp_symmetric.personid_b.in_(friendslist))
     results = query.all()
     for row in results:
-        nameofperson = classes.session.query(classes.Person).filter_by(personid=row.friendid).first()
-        print(f"Die Person {row.friendid} ({nameofperson.firstname} {nameofperson.lastname}) ist gemeinsamer Freund von {pid} und {fid}.")
-
+        nameofperson = classes.session.query(classes.Person).filter_by(personid=row.personid_b).first()
+        print(f"Die Person {row.personid_b} ({nameofperson.firstname} {nameofperson.lastname}) ist gemeinsamer Freund von {pid} und {fid}.")
 #Testing:
 #getCommonFriends(8796093022217,3298534883405)
 
 def getPersonsWithMostCommonInterests(pid):
     from sqlalchemy import func, desc
     from sqlalchemy.orm import aliased
-    pe = aliased(classes.Person_has_interest)
-    pz = aliased(classes.Person_has_interest)
+    pe = aliased(classes.Person_hasinterest)
+    pz = aliased(classes.Person_hasinterest)
     query = classes.session.query(func.count(pz.tagid), pz.personid).join(pe, pe.tagid == pz.tagid).group_by(pz.personid).filter(pe.personid == pid).order_by(desc(func.count(pz.tagid)))
     if len(query.all()) <= 1:
         print('Die eingegebene Person hat keine geteilten Interessen.')
@@ -86,14 +84,14 @@ def getJobRecommendation(pid): # Firma finden anhand von Uni
     if currentplaces == []:
         print('Die Person hat bisher keine Studien- oder Arbeitsorte gehabt, weshalb keine Empfehlung gegeben werden kann.')
         return None
-    friendquery = classes.session.query(classes.Pkp_symmetric).filter_by(personid=pid).all()
+    friendquery = classes.session.query(classes.pkp_symmetric).filter_by(personid_a=pid).all()
     friendlist = []
     if friendquery == []:
         print('Die Person hat keine Freunde, weshalb keine Empfehlung gegeben werden kann.')
         return None
     else:
         for i in friendquery:
-            friendlist.append(i.friendid)
+            friendlist.append(i.personid_b)
     orgquery = classes.session.query(classes.Organisation).filter(classes.Organisation.placeid.in_(currentplaces)).all()
     possibleorgs = []
     if orgquery == []:
@@ -136,14 +134,14 @@ def getShortestFriendshipPath(pid, fid, visited=None): #no auto-print!
     visited.add(pid)  # Mark the starting person as visited
     print(visited)
 
-    pidfriendsquery = classes.session.query(classes.Pkp_symmetric).filter_by(personid=pid).all()
+    pidfriendsquery = classes.session.query(classes.pkp_symmetric).filter_by(personid_a=pid).all()
     for friend in pidfriendsquery:
-        if friend.friendid == fid:
+        if friend.personid_b == fid:
             return f"{fid}"  # Found a direct friend (shortest path)
-        elif friend.friendid not in visited:  # Only explore unvisited friends
-            path = getShortestFriendshipPath(friend.friendid, fid, visited.copy())
+        elif friend.personid_b not in visited:  # Only explore unvisited friends
+            path = getShortestFriendshipPath(friend.personid_b, fid, visited.copy())
             if path:
-                return f"{friend.friendid}-{path}"  # Prepend current friend to path
+                return f"{friend.personid_b}-{path}"  # Prepend current friend to path
     return None  # No path found
 
 #Testing: 8796093022217
