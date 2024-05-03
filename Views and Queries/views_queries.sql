@@ -36,7 +36,7 @@ Sample output
 
 --1) In how many different European cities are there universities?
 
-SELECT COUNT(uni.universityID)
+SELECT COUNT(DISTINCT uni.cityID)
 FROM university as uni
 JOIN city
     ON uni.cityid=city.cityID
@@ -48,32 +48,29 @@ JOIN place
     ON place.placeID = continent.continentID
 WHERE place."name"='Europe';
 
--- Output: 1335
+-- Output: 249
 
 
 -- 2) How many forum posts has the youngest person authored
 
-SELECT person.firstname, person.lastname, post.postid 
+SELECT person.firstname, person.lastname, COUNT(post.postid)
 FROM post  
 JOIN "message" ON post.postid = "message".messageid
 JOIN person ON "message".creator = person.personid
-WHERE person.birthday = (SELECT MAX(person.birthday)FROM person );
+WHERE person.birthday = (SELECT MAX(person.birthday)FROM person )
+GROUP BY person.firstname, person.lastname;
 
 /*
 Output
 
- firstname | lastname |    postid
------------+----------+--------------
- Paul      | Becker   | 120259086700
- Paul      | Becker   |  94489288193
- Paul      | Becker   | 137438961155
- Paul      | Becker   | 111669157380
- Paul      | Becker   | 128849026587
+  firstname | lastname | count
+-----------+----------+-------
+ Paul      | Becker   |   232
 */
 
 -- 3) How many comments on posts are there from each country
 
-SELECT  place.name , COUNT(COALESCE(post.postid,0)) as comment_count 
+SELECT  place.name , COUNT(COALESCE(post.postid, 0)) as comment_count 
 FROM post 
 JOIN "message" 
 ON post.postid = "message".messageid
@@ -103,143 +100,48 @@ Output
 
 -- 4) From which cities do most users come
 
-SELECT place."name", sum(person.cityid) AS "Population" from person
+SELECT place."name", count(person.personid) AS "no_of_users" 
+FROM person
 JOIN city ON city.cityid = person.cityid
 JOIN place ON place.placeid = city.cityid
 GROUP BY place."name"
-order by "Population" DESC
-LIMIT 1;
+order by "no_of_users" DESC;
 
-/*
-Output
-   name      | Population
-----------------+---------------
- Rahim_Yar_Khan |          1588
-*/
 
 -- 5) Who is 'Hans Johansson' friends with?
 
-SELECT person.personid, person.firstname,person.lastname FROM person
-WHERE person.personid IN (
-    SELECT person_knows_person.personID_B FROM person 
-    JOIN person_knows_person ON person_knows_person.personID_A = person.personid
-    WHERE person.lastname = 'Johansson' And person.firstname = 'Hans');
-
-/*
-Output
-
-    personid    |    firstname     |  lastname
-----------------+------------------+------------
-  7696581394474 | Ali              | Achiou
-  5497558138940 | Paul             | Becker
- 12094627905628 | Abdoulaye Khouma | Dia
- 12094627905567 | Otto             | Richter
-  8796093022217 | Alim             | Guliyev
-  9895604650000 | Jan              | Zakrzewski
- 12094627905563 | Wojciech         | Ciesla
- 12094627905550 | Hossein          | Forouhar
- 10995116277764 | Bryn             | Davies
-(9 rows)
-*/
+SELECT personid, firstname, lastname
+FROM pkp_symmetric
+JOIN person ON pkp_symmetric.personid_2 = person.personid
+where pkp_symmetric.personid_1 = (SELECT personid FROM person where firstname = 'Hans');
 
 -- 6) Who are the "real" friends-of-a-friend of 'Hans Johansson'?
 
-SELECT  DISTINCT person.personid,person.firstname,person.lastname 
-FROM person 
-WHERE person.personid IN (
-    SELECT person_knows_person.personID_B FROM person
-    JOIN person_knows_person ON person_knows_person.personID_A = person.personid
-        WHERE person.personid in (
-            SELECT person_knows_person.personID_B  FROM person 
-            JOIN person_knows_person ON person_knows_person.personID_A = person.personid
-            WHERE person.lastname = 'Johansson' And person.firstname = 'Hans'
-        )
-) 
-AND person.personid not in (
-	SELECT person_knows_person.personID_B  FROM person 
-	JOIN person_knows_person ON person_knows_person.personID_A = person.personid
-	WHERE person.lastname = 'Johansson' And person.firstname = 'Hans'
-) ORDER BY person.lastname;
-
-/*
-Output
-
-    personid    |  firstname  |  lastname
-----------------+-------------+------------
-  8796093022253 | Ali         | Abouba
- 10995116277811 | Oleg        | Bazayev
-  7696581394490 | Amy         | Chen
- 16492674416674 | Roberto     | Diaz
-  6597069766688 | Miguel      | Gonzalez
- 16492674416738 | Wei         | Hu
- 12094627905580 | Alexei      | Kahnovich
- 13194139533342 | Joakim      | Larsson
-  8796093022251 | Chen        | Li
- 10995116277826 | Jie         | Li
- 10995116277851 | Chong       | Liu
-  9895604650074 | Cam         | Loan
-  9895604650002 | Neil        | Murray
- 13194139533352 | Celso       | Oliveira
- 14293651161168 | Abdul Jamil | Qureshi
- 15393162788920 | Otto        | Redl
- 17592186044483 | Francisco   | Reyes
- 15393162788948 | Anatoly     | Shevchenko
-  9895604650036 | Akira       | Yamamoto
- 15393162788888 | Jie         | Yang
- 14293651161162 | Li          | Zhang
- 16492674416689 | Lin         | Zhang
-(22 rows)
-*/
+SELECT personid, firstname, lastname
+FROM pkp_symmetric
+JOIN person ON pkp_symmetric.personid_2 = person.personid
+where pkp_symmetric.personid_1 in (SELECT person.personid
+FROM pkp_symmetric
+JOIN person ON pkp_symmetric.personid_2 = person.personid
+where pkp_symmetric.personid_1 = (SELECT personid FROM person where firstname = 'Hans'))
+AND person.personid not in (SELECT person.personid
+FROM pkp_symmetric
+JOIN person ON pkp_symmetric.personid_2 = person.personid
+where pkp_symmetric.personid_1 = (SELECT personid FROM person where firstname = 'Hans'))
+AND firstname != 'Hans';
 
 -- 7) Which users are members in all forums where 'Mehmet Koksal' is also a member?
 
-DROP TABLE IF EXISTS forumIdtemp;
-CREATE TABLE forumIdtemp (
-	id serial PRIMARY KEY,
-	forumID BIGINT 
-);
+SELECT person.firstname, person.lastname
+FROM (
+SELECT personid, COUNT(DISTINCT forumid) AS num_forums
+FROM forum_hasmember
+WHERE forumid IN (SELECT forumid FROM forum_hasmember JOIN person ON forum_hasmember.personid = person.personid where person.firstname = 'Mehmet' and person.lastname = 'Koksal')
+GROUP BY personid
+) AS subquery
+JOIN person ON subquery.personid = person.personid
+WHERE num_forums = 3;
 
-INSERT INTO forumIdtemp(forumID) (
-	SELECT forum_hasmember.forumid 
-	FROM forum_hasmember
-	WHERE forum_hasmember.personid =(
-		SELECT person.personid FROM person WHERE person.firstname='Mehmet' AND person.lastname='Koksal'
-	)
-);
-
-SELECT person.firstname,person.lastname
-FROM person 
-JOIN forum_hasmember ON forum_hasmember.personid = person.personid
-WHERE forum_hasmember.forumid=(
-    SELECT forumIdtemp.forumID 
-    FROM forumIdtemp 
-    WHERE forumIdtemp.id=1)
-INTERSECT
-SELECT person.firstname,person.lastname
-FROM person JOIN forum_hasmember ON forum_hasmember.personid = person.personid
-WHERE forum_hasmember.forumid=(
-    SELECT forumIdtemp.forumID 
-    FROM forumIdtemp 
-    WHERE forumIdtemp.id=2)
- INTERSECT
- SELECT person.firstname,person.lastname
- FROM person JOIN forum_hasmember on forum_hasmember.personid = person.personid
- WHERE forum_hasmember.forumid=(
-    SELECT forumIdtemp.forumID 
-    FROM forumIdtemp 
-    WHERE forumIdtemp.id=3);
-
-/*
-Output
-
- firstname | lastname
------------+----------
- Mehmet    | Koksal
- Miguel    | Gonzalez
- Chen      | Yang
- Paul      | Becker
-(4 rows)
-*/
 
 -- 8) Provide the percentage distribution of users by their origin from different continents.
 
@@ -253,18 +155,6 @@ JOIN continent ON continent.continentid = country.ispartof
 JOIN place ON place.placeid = continentid
 GROUP BY place."name";
 
-/*
-Output
-
-     name      | percentage
----------------+--------
- North_America |      9
- South_America |      4
- Africa        |     11
- Asia          |     50
- Europe        |     25
-(5 rows)
-*/
 
 -- 9) Which forums contain more posts than the average number of posts in forums
 
@@ -276,61 +166,35 @@ HAVING COUNT(post.postid) > (
 	(SELECT COUNT(post.postid)FROM post )/(SELECT COUNT (forum.forumid) FROM forum)
 ) ORDER BY forum.title ;
 
-/*
-Output
-
-                 title                   | post_count
-------------------------------------------+--------
- Album 0 of Abdul Haris Tobing            |     17
- Album 0 of Alejandro Rodriguez           |     20
- Album 0 of Ali Abouba                    |     13
- Album 0 of Amy Chen                      |     19
- Album 0 of Celso Oliveira                |     20
- Album 0 of Djelaludin Zaland             |     15
- Album 0 of Eric Mettacara                |     13
- Album 0 of Fritz Engel                   |     13
- Album 0 of Hao Li                        |     16
- Album 0 of Jie Li                        |     11
-*/
 
 -- 10) Which persons are friends with the person who received the most likes on a post?
 --     Sort the output alphabetically by last name.
 
-SELECT  person.firstname, person.lastname 
-FROM person
-WHERE person.personid in (
-	SELECT person_knows_person.personID_B FROM person
-	JOIN person_knows_person ON person_knows_person.personID_A = person.personid
-	WHERE person.personid =(
-		SELECT creator FROM "message" Where "message".messageid=(
-			SELECT messageid FROM(
-				SELECT messageid, Count(person_likes_message.personid) AS likes  FROM person_likes_message
-				join post on person_likes_message.messageid=post.postid 
-				GROUP BY messageid
-				ORDER BY likes DESC LIMIT 1
-			) AS variabel
-		)
-	)
+WITH MostLikedPerson AS (
+    SELECT p.personID, p.firstName, p.lastName
+    FROM person p
+    JOIN (
+        SELECT m.creator AS personID
+        FROM "message" m
+        JOIN (
+            SELECT messageID, COUNT(*) AS likes_count
+            FROM person_likes_Message
+            GROUP BY messageID
+            ORDER BY likes_count DESC
+            LIMIT 1
+        ) AS top_post_likes ON m.messageID = top_post_likes.messageID
+    ) AS top_likes_person ON p.personID = top_likes_person.personID
+),
+FriendsOfMostLiked AS (
+    SELECT DISTINCT fk.personID_2 AS friendID
+    FROM pkp_symmetric fk
+    JOIN MostLikedPerson mlp ON fk.personID_1 = mlp.personID
 )
-ORDER BY person.lastname;
+SELECT p.personID, p.firstName, p.lastName
+FROM person p
+JOIN FriendsOfMostLiked fm ON p.personID = fm.friendID
+ORDER BY p.lastName;
 
-/*
-Output
-
- firstname | lastname
------------+-----------
- Ali       | Abouba
- Bryn      | Davies
- Hossein   | Forouhar
- Wei       | Hu
- Alexei    | Kahnovich
- Joakim    | Larsson
- Jie       | Li
- Akira     | Yamamoto
- Li        | Zhang
- Lin       | Zhang
-(10 rows)
-*/
 
 -- 11) Which persons are directly or indirectly connected to 'Jun Hu' (id 94) (friends)? 
 --     Provide for each person the minimum distance to Jun
@@ -348,23 +212,6 @@ SELECT p.personID, p.firstName, p.lastName, df.distance
 FROM DirectFriends df
 JOIN person p ON df.personID = p.personID;
 
-/*
-Output
-
-   personid    |    firstname     |  lastname  | distance
-----------------+------------------+------------+----------
-  8796093022217 | Alim             | Guliyev    |        1
-  3298534883365 | Wei              | Wei        |        1
-  8796093022251 | Chen             | Li         |        1
-  2199023255625 | Cheng            | Chen       |        1
- 10995116277851 | Chong            | Liu        |        1
-             96 | Anson            | Chen       |        1
-  9895604649984 | Yang             | Li         |        2
-  8796093022217 | Alim             | Guliyev    |        2
- 15393162788888 | Jie              | Yang       |        2
-  9895604650020 | Yang             | Liu        |        2
- 16492674416689 | Lin              | Zhang      |        2
-*/
 
 -- 12) Extend the query for Task 11 by also outputting the minimum path between the users in addition to the distance.
 
